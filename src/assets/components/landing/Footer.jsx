@@ -3,7 +3,6 @@ import { useState } from "react";
 import {
   FiArrowRight,
   FiFacebook,
-  FiGithub,
   FiInstagram,
   FiLinkedin,
 } from "react-icons/fi";
@@ -11,13 +10,40 @@ import {
 export default function Footer() {
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  function handleSubscribe(event) {
+  async function handleSubscribe(event) {
     event.preventDefault();
+    setIsSubmitting(true);
+    setMessage("");
 
-    if (!email.trim()) return;
+    const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || "http://localhost:8000").replace(/\/+$/, "");
 
-    setMessage("Thanks! Connect a backend to save newsletter subscriptions.");
+    try {
+      const response = await fetch(`${apiBaseUrl}/newsletter.php`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      const result = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(result.error || "We couldn't save your subscription. Please try again.");
+      }
+
+      setMessage(result.message || "Thanks for subscribing.");
+      setEmail("");
+    } catch (error) {
+      setMessage(
+        error instanceof TypeError
+          ? "Could not reach the subscription service. Check that the PHP API is running and try again."
+          : error instanceof Error
+            ? error.message
+            : "Could not reach the subscription service. Please try again.",
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -30,15 +56,7 @@ export default function Footer() {
           </a>
           <p>Build better. Create more. Go further.</p>
           <nav className="footer-social-links" aria-label="Social media">
-            <a
-              href="https://github.com"
-              className="social-link"
-              aria-label="GitHub"
-              target="_blank"
-              rel="noreferrer"
-            >
-              <FiGithub />
-            </a>
+
             <a
               href="https://facebook.com"
               className="social-link"
@@ -96,13 +114,15 @@ export default function Footer() {
               }}
               placeholder="Enter your email"
               aria-label="Your email address"
+              autoComplete="email"
+              disabled={isSubmitting}
               required
             />
-            <button type="submit" aria-label="Subscribe">
-              <FiArrowRight />
+            <button type="submit" aria-label="Subscribe" disabled={isSubmitting}>
+              {isSubmitting ? "…" : <FiArrowRight />}
             </button>
           </form>
-          {message && <small className="form-message">{message}</small>}
+          {message && <small className="form-message" role="status" aria-live="polite">{message}</small>}
         </div>
       </div>
 

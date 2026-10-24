@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { FiArrowRight, FiMenu, FiX } from "react-icons/fi";
 
-export default function Navbar() {
+export default function Navbar({ onOpenDashboard }) {
   const [menuOpen, setMenuOpen] = useState(false);
 
   const closeMenu = () => setMenuOpen(false);
@@ -24,13 +24,25 @@ export default function Navbar() {
 
       <nav className={menuOpen ? "nav-links open" : "nav-links"}>
         {["Home", "Features", "About", "Contact"].map((item) => (
-          <a key={item} href={`#${item.toLowerCase()}`} onClick={closeMenu}>
+          <a
+            key={item}
+            href={`#${item.toLowerCase()}`}
+            onClick={closeMenu}
+          >
             {item}
           </a>
         ))}
       </nav>
 
-      <a className="nav-cta" href="#get-started">
+      <a
+        className="nav-cta"
+        href="#dashboard"
+        onClick={(event) => {
+          event.preventDefault();
+          closeMenu();
+          onOpenDashboard?.();
+        }}
+      >
         Get Started <FiArrowRight />
       </a>
     </header>
